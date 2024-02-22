@@ -2,3 +2,4 @@
 MNIST/
 venv/
 model.pt
+history.png

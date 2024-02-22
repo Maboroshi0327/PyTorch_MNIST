@@ -7,7 +7,7 @@ from tqdm import tqdm
 from matplotlib import pyplot as plt
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-EPOCH = 10
+EPOCH = 20
 BATCH = 1000
 LR = 0.001
 MODEL_PATH = "./model.pt"
@@ -34,6 +34,8 @@ class CNN(nn.Module):
 
         self.flatten = nn.Flatten()
 
+        self.dropout = nn.Dropout(p=0.2)
+
         self.out = nn.Sequential(
             nn.Linear(320, 10),
             nn.Softmax(),
@@ -43,6 +45,7 @@ class CNN(nn.Module):
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.flatten(x)
+        x = self.dropout(x)
         x = self.out(x)
         return x
 
@@ -135,7 +138,7 @@ def main():
     torch.save(model.state_dict(), MODEL_PATH)
 
     # Plot training & testing history
-    plt.figure()
+    plt.figure(figsize=(15, 11), dpi=120)
     plt.subplot(221)
     plt.plot(train_acc_list)
     plt.title(f"Training accuracy {train_acc_list[-1]}")
@@ -155,7 +158,8 @@ def main():
     plt.plot(test_loss_list)
     plt.title(f"Testing loss {test_loss_list[-1]}")
     plt.xlabel("step")
-    plt.show()
+
+    plt.savefig("history.png")
 
 
 if __name__ == "__main__":
