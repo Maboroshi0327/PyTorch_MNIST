@@ -8,8 +8,9 @@ from matplotlib import pyplot as plt
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 EPOCH = 10
-BATCH = 256
+BATCH = 1000
 LR = 0.001
+MODEL_PATH = "./model.pt"
 
 
 class CNN(nn.Module):
@@ -70,14 +71,18 @@ def main():
         download=True,
     )
 
-    train_loader = DataLoader(dataset=train_data, batch_size=BATCH, shuffle=True)
+    train_loader = DataLoader(
+        dataset=train_data,
+        batch_size=BATCH,
+        shuffle=True,
+        pin_memory=True,
+    )
     test_x = torch.unsqueeze(test_data.data, dim=1).type(torch.FloatTensor) / 255.0
     test_y = test_data.targets
-    test_x = test_x.to(device)
-    test_y = test_y.to(device)
+    test_x = test_x.to(device, non_blocking=True)
+    test_y = test_y.to(device, non_blocking=True)
 
-    model = CNN()
-    model = model.to(device)
+    model = CNN().to(device)
     model.summary()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
@@ -90,16 +95,19 @@ def main():
     for epoch in range(EPOCH):
         with tqdm(train_loader, unit="batch") as tepoch:
             for data, target in tepoch:
-                data = data.to(device)
-                target = target.to(device)
+                data = data.to(device, non_blocking=True)
+                target = target.to(device, non_blocking=True)
 
                 # Training
                 model.train()
                 output = model(data)
+
                 train_acc = accuracy(output=output, target=target)
                 train_acc_list.append(train_acc)
+
                 train_loss = loss_function(output, target)
                 train_loss_list.append(train_loss.item())
+
                 optimizer.zero_grad()
                 train_loss.backward()
                 optimizer.step()
@@ -108,8 +116,10 @@ def main():
                 with torch.no_grad():
                     model.eval()
                     output = model(test_x)
+
                     test_acc = accuracy(output=output, target=test_y)
                     test_acc_list.append(test_acc)
+
                     test_loss = loss_function(output, test_y)
                     test_loss_list.append(test_loss.item())
 
@@ -121,6 +131,10 @@ def main():
                     test_loss=test_loss.item(),
                 )
 
+    # Save model
+    torch.save(model.state_dict(), MODEL_PATH)
+
+    # Plot training & testing history
     plt.figure()
     plt.subplot(221)
     plt.plot(train_acc_list)

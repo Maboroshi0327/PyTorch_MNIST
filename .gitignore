@@ -1,3 +1,4 @@
 .vscode/
 MNIST/
 venv/
+model.pt
