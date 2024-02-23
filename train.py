@@ -2,61 +2,16 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import torchvision
-from torchsummary import summary
 from tqdm import tqdm
 from matplotlib import pyplot as plt
 
+from model import accuracy, CNN_MNIST
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
-EPOCH = 20
+EPOCH = 5
 BATCH = 1000
-LR = 0.001
+LR = 0.005
 MODEL_PATH = "./model.pt"
-
-
-class CNN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Sequential(
-            nn.Conv2d(
-                in_channels=1, out_channels=7, kernel_size=5, stride=1, padding=2
-            ),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
-        )
-
-        self.conv2 = nn.Sequential(
-            nn.Conv2d(
-                in_channels=7, out_channels=5, kernel_size=3, stride=1, padding=2
-            ),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
-        )
-
-        self.flatten = nn.Flatten()
-
-        self.dropout = nn.Dropout(p=0.2)
-
-        self.out = nn.Sequential(
-            nn.Linear(320, 10),
-            nn.Softmax(),
-        )
-
-    def forward(self, x):
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = self.flatten(x)
-        x = self.dropout(x)
-        x = self.out(x)
-        return x
-
-    def summary(self):
-        summary(model=self, input_size=(1, 28, 28), device=device)
-
-
-def accuracy(output, target) -> float:
-    output = torch.argmax(output, dim=1)
-    acc = (output == target).sum().item() / target.size()[0]
-    return acc
 
 
 def main():
@@ -85,7 +40,7 @@ def main():
     test_x = test_x.to(device, non_blocking=True)
     test_y = test_y.to(device, non_blocking=True)
 
-    model = CNN().to(device)
+    model = CNN_MNIST(device=device).to(device)
     model.summary()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
