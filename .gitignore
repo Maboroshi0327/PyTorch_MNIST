@@ -3,5 +3,7 @@ __pycache__/
 flagged/
 MNIST/
 venv/
-model.pt
 history.png
+model.pt
+model_architecture.onnx
+model_architecture.pdf

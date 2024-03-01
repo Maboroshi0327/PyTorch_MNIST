@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torchsummary import summary
+from torchviz import make_dot
 
 
 def accuracy(output, target) -> float:
@@ -16,7 +17,7 @@ class CNN_MNIST(nn.Module):
 
         self.conv1 = nn.Sequential(
             nn.Conv2d(
-                in_channels=1, out_channels=7, kernel_size=5, stride=1, padding=2
+                in_channels=1, out_channels=5, kernel_size=5, stride=1, padding=2
             ),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2),
@@ -24,7 +25,7 @@ class CNN_MNIST(nn.Module):
 
         self.conv2 = nn.Sequential(
             nn.Conv2d(
-                in_channels=7, out_channels=5, kernel_size=3, stride=1, padding=2
+                in_channels=5, out_channels=3, kernel_size=3, stride=1, padding=1
             ),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2),
@@ -32,17 +33,17 @@ class CNN_MNIST(nn.Module):
 
         self.flatten = nn.Flatten()
 
-        self.drop1 = nn.Dropout(p=0.2)
+        self.drop1 = nn.Dropout(p=0.5)
 
         self.fc1 = nn.Sequential(
-            nn.Linear(320, 150),
+            nn.Linear(147, 50),
             nn.ReLU(),
         )
 
-        self.drop2 = nn.Dropout(p=0.2)
+        self.drop2 = nn.Dropout(p=0.5)
 
         self.out = nn.Sequential(
-            nn.Linear(150, 10),
+            nn.Linear(50, 10),
             nn.Softmax(dim=1),
         )
 
@@ -61,5 +62,19 @@ class CNN_MNIST(nn.Module):
 
 
 if __name__ == "__main__":
+    # Summary
     model = CNN_MNIST(device="cpu")
     model.summary()
+
+    # Export the model to ONNX format
+    torch_input = torch.randn(1, 1, 28, 28).cpu()
+    onnx_program = torch.onnx.export(
+        model,
+        torch_input,
+        "model_architecture.onnx",
+    )
+
+    # TorchViz Graphviz
+    out = model(torch_input)
+    g = make_dot(out)
+    g.view(filename="model_architecture", cleanup=True)

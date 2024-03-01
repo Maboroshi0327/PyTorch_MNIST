@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from model import accuracy, CNN_MNIST
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-EPOCH = 5
+EPOCH = 20
 BATCH = 1000
 LR = 0.005
 MODEL_PATH = "./model.pt"
@@ -59,25 +59,24 @@ def main():
                 # Training
                 model.train()
                 output = model(data)
-
-                train_acc = accuracy(output=output, target=target)
-                train_acc_list.append(train_acc)
-
-                train_loss = loss_function(output, target)
-                train_loss_list.append(train_loss.item())
-
+                loss = loss_function(output, target)
                 optimizer.zero_grad()
-                train_loss.backward()
+                loss.backward()
                 optimizer.step()
 
-                # Testing
+                # Accuracy
                 with torch.no_grad():
                     model.eval()
-                    output = model(test_x)
 
+                    output = model(data)
+                    train_acc = accuracy(output=output, target=target)
+                    train_acc_list.append(train_acc)
+                    train_loss = loss_function(output, target)
+                    train_loss_list.append(train_loss.item())
+
+                    output = model(test_x)
                     test_acc = accuracy(output=output, target=test_y)
                     test_acc_list.append(test_acc)
-
                     test_loss = loss_function(output, test_y)
                     test_loss_list.append(test_loss.item())
 
